@@ -31,15 +31,15 @@ export default function VPApprovalSystem() {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold">副大統領承認システム</h1>
+      <h1 className="text-xl font-bold">1135サーバー VPシステム(1135 Server VP System)</h1>
       <Card className="p-4 my-4">
-        <h2 className="text-lg">副大統領応募フォーム</h2>
+        <h2 className="text-lg">副大統領応募フォーム(Vice President application form)</h2>
         <div className="mb-2 font-bold">Name</div>
         <Input
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
-        <div className="mb-2 font-bold">Federation</div>
+        <div className="mb-2 font-bold">Federation</div>	
         <Input
           value={form.Federation}
           onChange={(e) => setForm({ ...form, Federation: e.target.value })}
@@ -60,7 +60,7 @@ export default function VPApprovalSystem() {
           timeIntervals={60}
           dateFormat="yyyy/MM/dd HH:mm"
         />
-        <Button onClick={handleApply}>応募する</Button>
+        <Button onClick={handleApply}>応募する(Application)</Button>
       </Card>
       <Button onClick={handleAdminLogin}>管理者ログイン</Button>
       {isAdmin && (
@@ -75,7 +75,7 @@ export default function VPApprovalSystem() {
         </Card>
       )}
       <Card className="p-4 my-4">
-        <h2 className="text-lg">承認済み副大統領</h2>
+        <h2 className="text-lg">副大統領スケジュール(Vice President's schedule)</h2>
         {approved.map((app, index) => (
           <div key={index}>{app.name} - {app.Federation} ({app.start_time?.toLocaleString()}~{app.end_time?.toLocaleString()})</div>
         ))}

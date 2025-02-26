@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/meimisaki/static/css/main.eb533ca2.css",
+    "main.js": "/meimisaki/static/js/main.fb79f166.js",
+    "static/js/453.85ba3bfc.chunk.js": "/meimisaki/static/js/453.85ba3bfc.chunk.js",
+    "index.html": "/meimisaki/index.html",
+    "main.eb533ca2.css.map": "/meimisaki/static/css/main.eb533ca2.css.map",
+    "main.fb79f166.js.map": "/meimisaki/static/js/main.fb79f166.js.map",
+    "453.85ba3bfc.chunk.js.map": "/meimisaki/static/js/453.85ba3bfc.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.eb533ca2.css",
+    "static/js/main.fb79f166.js"
+  ]
+}

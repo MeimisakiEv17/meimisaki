@@ -103,7 +103,7 @@ export default function VPApprovalSystem() {
     <div className="p-4">
       <h1 className="text-xl font-bold">1135サーバー VPシステム (1135 Server VP System)</h1>
       <Card className="p-4 my-4">
-        <h2 className="text-lg">副大統領応募フォーム (Vice President Application Form)</h2>
+        <h2 className="text-lg">副大統領応募フォー (Vice President Application Form)</h2>
         <div className="mb-2 font-bold">Name</div>
         <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <div className="mb-2 font-bold">Federation</div>

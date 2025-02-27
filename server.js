@@ -55,14 +55,39 @@ app.post("/apply", async (req, res) => {
 
     res.status(201).json({ message: "応募が送信されました！" });
   } catch (error) {
+    console.error("❌ Error saving application:", error);
     res.status(500).json({ error: "サーバーエラーが発生しました。" });
   }
 });
 
-// 📌 副大統領スケジュール取得
+// 📌 副大統領スケジュール取得（GET /approved）
 app.get("/approved", async (req, res) => {
-  const approved = await ApprovedApplication.find().sort({ start_time: 1 });
-  res.json(approved);
+  try {
+    const approved = await ApprovedApplication.find().sort({ start_time: 1 });
+    res.json(approved);
+  } catch (error) {
+    console.error("❌ Error fetching approved applications:", error);
+    res.status(500).json({ error: "Failed to fetch approved applications" });
+  }
+});
+
+// 📌 特定のIDのデータを削除（DELETE /delete-application/:id）
+app.delete("/delete-application/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ID を指定してデータを削除
+    const deletedApplication = await ApprovedApplication.findByIdAndDelete(id);
+
+    if (!deletedApplication) {
+      return res.status(404).json({ error: "データが見つかりません。" });
+    }
+
+    res.status(200).json({ message: "応募データを削除しました。" });
+  } catch (error) {
+    console.error("❌ Error deleting application:", error);
+    res.status(500).json({ error: "サーバーエラーが発生しました。" });
+  }
 });
 
 app.listen(5000, () => console.log("✅ Server running on port 5000"));

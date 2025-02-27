@@ -31,7 +31,11 @@ export default function VPApprovalSystem() {
       const response = await fetch("https://meimisakiserver.onrender.com/approved");
       if (response.ok) {
         const data = await response.json();
-        setApproved(data);
+        // 🔹 Start_Time の昇順で並び替え
+        const sortedData = data
+          .filter(app => new Date(app.start_time) > new Date()) // 🔹 現在時刻より前のものを除外
+          .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+        setApproved(sortedData);
       } else {
         console.error("Failed to fetch approved applications");
       }
@@ -103,7 +107,7 @@ export default function VPApprovalSystem() {
     <div className="p-4">
       <h1 className="text-xl font-bold">1135サーバー VPシステム (1135 Server VP System)</h1>
       <Card className="p-4 my-4">
-        <h2 className="text-lg">副大統領応募フォー (Vice President Application Form)</h2>
+        <h2 className="text-lg">副大統領応募フォーム (Vice President Application Form)</h2>
         <div className="mb-2 font-bold">Name</div>
         <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <div className="mb-2 font-bold">Federation</div>
@@ -145,11 +149,30 @@ export default function VPApprovalSystem() {
 
       <Card className="p-4 my-4">
         <h2 className="text-lg">副大統領スケジュール (Vice President's Schedule)</h2>
-        {approved.map((app) => (
-          <div key={app._id}>
-            {app.name} - {app.federation} ({new Date(app.start_time).toLocaleString()} ~ {new Date(app.end_time).toLocaleString()})
-          </div>
-        ))}
+        {approved.length > 0 ? (
+          <table className="table-auto w-full border-collapse border border-gray-500">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border border-gray-500 px-4 py-2">Name</th>
+                <th className="border border-gray-500 px-4 py-2">Federation</th>
+                <th className="border border-gray-500 px-4 py-2">Start Time</th>
+                <th className="border border-gray-500 px-4 py-2">End Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {approved.map((app) => (
+                <tr key={app._id}>
+                  <td className="border border-gray-500 px-4 py-2">{app.name}</td>
+                  <td className="border border-gray-500 px-4 py-2">{app.federation}</td>
+                  <td className="border border-gray-500 px-4 py-2">{new Date(app.start_time).toLocaleString()}</td>
+                  <td className="border border-gray-500 px-4 py-2">{new Date(app.end_time).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>現在、承認されたスケジュールはありません。</p>
+        )}
       </Card>
     </div>
   );

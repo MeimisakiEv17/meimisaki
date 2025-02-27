@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/meimisaki/static/css/main.eb533ca2.css",
-    "main.js": "/meimisaki/static/js/main.0c7eabb7.js",
+    "main.js": "/meimisaki/static/js/main.3b98bfca.js",
     "static/js/453.85ba3bfc.chunk.js": "/meimisaki/static/js/453.85ba3bfc.chunk.js",
     "index.html": "/meimisaki/index.html",
     "main.eb533ca2.css.map": "/meimisaki/static/css/main.eb533ca2.css.map",
-    "main.0c7eabb7.js.map": "/meimisaki/static/js/main.0c7eabb7.js.map",
+    "main.3b98bfca.js.map": "/meimisaki/static/js/main.3b98bfca.js.map",
     "453.85ba3bfc.chunk.js.map": "/meimisaki/static/js/453.85ba3bfc.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.eb533ca2.css",
-    "static/js/main.0c7eabb7.js"
+    "static/js/main.3b98bfca.js"
   ]
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const ApplyForm = () => {
+const ApplyForm = ({ fetchApproved }) => {
   const [formData, setFormData] = useState({
     name: "",
     federation: "",
@@ -14,20 +14,30 @@ const ApplyForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 📌 日付の変換 (ISO 形式)
+    const startTimeISO = new Date(formData.start_time).toISOString();
+    const endTimeISO = new Date(formData.end_time).toISOString();
+
     try {
       const response = await fetch("https://meimisakiserver.onrender.com/apply", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          federation: formData.federation,
+          start_time: startTimeISO,
+          end_time: endTimeISO,
+        }),
       });
 
+      const data = await response.json();
       if (response.ok) {
-        alert("応募が送信されました！");
+        alert(data.message);
         setFormData({ name: "", federation: "", start_time: "", end_time: "" });
+        fetchApproved(); // スケジュールを更新
       } else {
-        alert("応募に失敗しました");
+        alert(`応募に失敗しました: ${data.error}`);
       }
     } catch (error) {
       console.error("Error:", error);

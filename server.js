@@ -7,59 +7,62 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// ✅ MongoDB に接続
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// 📌 MongoDB スキーマ & モデル
 const ApplicationSchema = new mongoose.Schema({
   name: String,
   federation: String,
   start_time: Date,
   end_time: Date
 });
-const Application = mongoose.model("Application", ApplicationSchema);
+const ApprovedApplication = mongoose.model("ApprovedApplication", ApplicationSchema);
 
 // 📌 応募データを保存（POST /apply）
 app.post("/apply", async (req, res) => {
   try {
-    const newApplication = new Application(req.body);
+    const { name, federation, start_time, end_time } = req.body;
+    const start = new Date(start_time);
+    const end = new Date(end_time);
+
+    if (!name || !federation || !start_time || !end_time) {
+      return res.status(400).json({ error: "すべての項目を入力してください。" });
+    }
+
+    const duration = (end - start) / (1000 * 60 * 60);
+    if (duration > 2) {
+      return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
+    }
+
+    const overlappingApplication = await ApprovedApplication.findOne({
+      $or: [
+        { start_time: { $lt: end }, end_time: { $gt: start } },
+      ]
+    });
+
+    if (overlappingApplication) {
+      return res.status(400).json({ error: "指定された時間帯には既にスケジュールがあります。" });
+    }
+
+    const federationCount = await ApprovedApplication.countDocuments({ federation });
+    if (federationCount >= 2) {
+      return res.status(400).json({ error: "同じFederationの応募が2つ以上あります。" });
+    }
+
+    const newApplication = new ApprovedApplication({ name, federation, start_time: start, end_time: end });
     await newApplication.save();
-    res.status(201).json({ message: "Application saved successfully" });
+
+    res.status(201).json({ message: "応募が送信されました！" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to save application" });
+    res.status(500).json({ error: "サーバーエラーが発生しました。" });
   }
 });
 
-// 📌 すべての応募データを取得（GET /applications）
-app.get("/applications", async (req, res) => {
-  try {
-    const applications = await Application.find();
-    res.status(200).json(applications);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch applications" });
-  }
-});
-
-// 📌 承認済みのスケジュールを取得（GET /approved）
+// 📌 副大統領スケジュール取得
 app.get("/approved", async (req, res) => {
-  try {
-    // 🔹 日本時間（JST）で現在の時刻を取得
-    const nowJST = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
-    const now = new Date(nowJST);
-
-    // 🔹 Start_Time が現在より後のものだけ取得
-    const approvedApplications = await Application.find({
-      start_time: { $gte: now }
-    }).sort({ start_time: 1 }); // 🔹 昇順にソート
-
-    res.status(200).json(approvedApplications);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch approved applications" });
-  }
+  const approved = await ApprovedApplication.find().sort({ start_time: 1 });
+  res.json(approved);
 });
 
-// 📌 サーバー起動
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(5000, () => console.log("✅ Server running on port 5000"));

@@ -5,35 +5,18 @@ import Calendar from './ui/calendar';
 import Input from './ui/input';
 
 export default function VPApprovalSystem() {
-  const [form, setForm] = useState({ name: "", federation: "", start_time: "", end_time: "" });
-  const [applications, setApplications] = useState([]);
+  const [form, setForm] = useState({ name: "", federation: "", start_time: null, end_time: null });
   const [approved, setApproved] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // 📌 応募一覧を取得する
-  const fetchApplications = async () => {
-    try {
-      const response = await fetch("https://meimisakiserver.onrender.com/applications");
-      if (response.ok) {
-        const data = await response.json();
-        setApplications(data);
-      } else {
-        console.error("Failed to fetch applications");
-      }
-    } catch (error) {
-      console.error("Error fetching applications:", error);
-    }
-  };
-
-  // 📌 承認済みリストを取得する
+  // 📌 承認済みスケジュールを取得
   const fetchApproved = async () => {
     try {
       const response = await fetch("https://meimisakiserver.onrender.com/approved");
       if (response.ok) {
         const data = await response.json();
-        // 🔹 Start_Time の昇順で並び替え
+        // 🔹 Start Time の昇順 & 現在時刻より過去のものを削除
         const sortedData = data
-          .filter(app => new Date(app.start_time) > new Date()) // 🔹 現在時刻より前のものを除外
+          .filter(app => new Date(app.start_time) > new Date())
           .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
         setApproved(sortedData);
       } else {
@@ -46,7 +29,6 @@ export default function VPApprovalSystem() {
 
   // 📌 初回読み込み時にデータ取得
   useEffect(() => {
-    fetchApplications();
     fetchApproved();
   }, []);
 
@@ -60,45 +42,20 @@ export default function VPApprovalSystem() {
     try {
       const response = await fetch("https://meimisakiserver.onrender.com/apply", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
 
+      const data = await response.json();
       if (response.ok) {
-        alert("応募が送信されました！");
-        setForm({ name: "", federation: "", start_time: "", end_time: "" });
-        fetchApplications();
+        alert(data.message);
+        setForm({ name: "", federation: "", start_time: null, end_time: null });
+        fetchApproved();
       } else {
-        alert("応募に失敗しました");
+        alert(data.error);
       }
     } catch (error) {
       console.error("Error submitting application:", error);
-      alert("サーバーエラーが発生しました");
-    }
-  };
-
-  // 📌 応募を承認する
-  const handleApprove = async (app) => {
-    try {
-      const response = await fetch("https://meimisakiserver.onrender.com/approve", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(app),
-      });
-
-      if (response.ok) {
-        alert(`${app.name} の応募が承認されました！`);
-        fetchApplications();
-        fetchApproved();
-      } else {
-        alert("承認に失敗しました");
-      }
-    } catch (error) {
-      console.error("Error approving application:", error);
       alert("サーバーエラーが発生しました");
     }
   };
@@ -115,7 +72,7 @@ export default function VPApprovalSystem() {
         <div className="mb-2 font-bold">Start Time</div>
         <Calendar
           selected={form.start_time}
-          onChange={(date) => setForm({ ...form, start_time: date.toISOString() })}
+          onChange={(date) => setForm({ ...form, start_time: date })}
           showTimeSelect
           timeIntervals={60}
           dateFormat="yyyy/MM/dd HH:mm"
@@ -123,29 +80,13 @@ export default function VPApprovalSystem() {
         <div className="mb-2 font-bold">End Time</div>
         <Calendar
           selected={form.end_time}
-          onChange={(date) => setForm({ ...form, end_time: date.toISOString() })}
+          onChange={(date) => setForm({ ...form, end_time: date })}
           showTimeSelect
           timeIntervals={60}
           dateFormat="yyyy/MM/dd HH:mm"
         />
         <Button onClick={handleApply}>応募する (Apply)</Button>
       </Card>
-
-      <Button onClick={() => setIsAdmin(true)}>管理者ログイン (Admin Login)</Button>
-
-      {isAdmin && (
-        <Card className="p-4 my-4">
-          <h2 className="text-lg">応募一覧 (管理者用) (Application List for Admin)</h2>
-          {applications.map((app) => (
-            <div key={app._id} className="flex justify-between">
-              <span>
-                {app.name} - {app.federation} ({new Date(app.start_time).toLocaleString()} ~ {new Date(app.end_time).toLocaleString()})
-              </span>
-              <Button onClick={() => handleApprove(app)}>承認 (Approve)</Button>
-            </div>
-          ))}
-        </Card>
-      )}
 
       <Card className="p-4 my-4">
         <h2 className="text-lg">副大統領スケジュール (Vice President's Schedule)</h2>

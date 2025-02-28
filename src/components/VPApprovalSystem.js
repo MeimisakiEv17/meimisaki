@@ -1,82 +1,93 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import Card from "./ui/card";
+import Button from "./ui/button";
+import Calendar from "./ui/calendar";
+import Input from "./ui/input";
 
-const ApplyForm = ({ fetchApproved }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    federation: "",
-    start_time: "",
-    end_time: "",
-  });
+export default function VPApprovalSystem() {
+  const [form, setForm] = useState({ name: "", federation: "", start_time: null, end_time: null });
+  const [approved, setApproved] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [password, setPassword] = useState("");
-  const [applications, setApplications] = useState([]);
+  const [adminPassword, setAdminPassword] = useState("");
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // 📌 承認済みスケジュールを取得
+  const fetchApproved = async () => {
+    try {
+      const response = await fetch("https://meimisakiserver.onrender.com/approved");
+      if (response.ok) {
+        const data = await response.json();
+        const sortedData = data
+          .filter(app => new Date(app.start_time) > new Date()) // 🔹 現在時刻より過去のものを削除
+          .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+        setApproved(sortedData);
+      } else {
+        console.error("Failed to fetch approved applications");
+      }
+    } catch (error) {
+      console.error("Error fetching approved applications:", error);
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // 📌 初回読み込み時にデータ取得
+  useEffect(() => {
+    fetchApproved();
+  }, []);
 
-    const startTimeISO = new Date(formData.start_time).toISOString();
-    const endTimeISO = new Date(formData.end_time).toISOString();
+  // 📌 応募を送信する
+  const handleApply = async () => {
+    if (!form.name || !form.federation || !form.start_time || !form.end_time) {
+      alert("すべての項目を入力してください！");
+      return;
+    }
 
     try {
       const response = await fetch("https://meimisakiserver.onrender.com/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          federation: formData.federation,
-          start_time: startTimeISO,
-          end_time: endTimeISO,
-        }),
+        body: JSON.stringify(form),
       });
 
       const data = await response.json();
       if (response.ok) {
         alert(data.message);
-        setFormData({ name: "", federation: "", start_time: "", end_time: "" });
+        setForm({ name: "", federation: "", start_time: null, end_time: null });
         fetchApproved();
-        fetchApplications();
       } else {
-        alert(`応募に失敗しました: ${data.error}`);
+        alert(data.error);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error submitting application:", error);
       alert("サーバーエラーが発生しました");
     }
   };
 
-  const fetchApplications = async () => {
-    try {
-      const response = await fetch("https://meimisakiserver.onrender.com/approved");
-      if (response.ok) {
-        const data = await response.json();
-        setApplications(data);
-      } else {
-        console.error("Failed to fetch applications");
-      }
-    } catch (error) {
-      console.error("Error fetching applications:", error);
+  // 📌 管理者ログイン
+  const handleAdminLogin = () => {
+    if (adminPassword === "Nekomen") {
+      setIsAdmin(true);
+      alert("管理者としてログインしました");
+    } else {
+      alert("パスワードが間違っています");
     }
   };
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
+  // 📌 スケジュール削除
   const handleDelete = async (id) => {
+    if (!isAdmin) return;
+
     try {
       const response = await fetch(`https://meimisakiserver.onrender.com/delete-application/${id}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: "Nekomen" })
       });
 
+      const data = await response.json();
       if (response.ok) {
-        alert("応募データを削除しました");
-        fetchApplications();
+        alert("スケジュールを削除しました");
+        fetchApproved();
       } else {
-        alert("削除に失敗しました");
+        alert(data.error);
       }
     } catch (error) {
       console.error("Error deleting application:", error);
@@ -84,58 +95,58 @@ const ApplyForm = ({ fetchApproved }) => {
     }
   };
 
-  const handleAdminLogin = () => {
-    if (password === "Nekomen") {
-      setIsAdmin(true);
-      alert("管理者モードに切り替わりました");
-    } else {
-      alert("パスワードが間違っています");
-    }
-  };
-
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <h2>応募フォーム</h2>
-        <label>
-          名前:
-          <input type="text" name="name" value={formData.name} onChange={handleChange} required />
-        </label>
-        <br />
-        <label>
-          Federation:
-          <input type="text" name="federation" value={formData.federation} onChange={handleChange} required />
-        </label>
-        <br />
-        <label>
-          開始時間:
-          <input type="datetime-local" name="start_time" value={formData.start_time} onChange={handleChange} required />
-        </label>
-        <br />
-        <label>
-          終了時間:
-          <input type="datetime-local" name="end_time" value={formData.end_time} onChange={handleChange} required />
-        </label>
-        <br />
-        <button type="submit">応募する</button>
-      </form>
-      <hr />
-      <h2>応募一覧</h2>
-      <ul>
-        {applications.map((app) => (
-          <li key={app._id}>
-            {app.name} - {app.federation} ({new Date(app.start_time).toLocaleString()} ~ {new Date(app.end_time).toLocaleString()})
-            <button onClick={() => handleDelete(app._id)}>削除</button>
-          </li>
-        ))}
-      </ul>
-      <hr />
-      <h2>管理者ログイン</h2>
-      <input type="password" placeholder="パスワード" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={handleAdminLogin}>ログイン</button>
-      {isAdmin && <p>管理者モード: 副大統領スケジュールの情報を削除できます。</p>}
+    <div className="p-4">
+      <h1 className="text-xl font-bold">1135サーバー VPシステム (1135 Server VP System)</h1>
+      <Card className="p-4 my-4">
+        <h2 className="text-lg">副大統領応募フォーム (Vice President Application Form)</h2>
+        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" />
+        <Input value={form.federation} onChange={(e) => setForm({ ...form, federation: e.target.value })} placeholder="Federation" />
+        <Calendar selected={form.start_time} onChange={(date) => setForm({ ...form, start_time: date })} showTimeSelect timeIntervals={60} dateFormat="yyyy/MM/dd HH:mm" />
+        <Calendar selected={form.end_time} onChange={(date) => setForm({ ...form, end_time: date })} showTimeSelect timeIntervals={60} dateFormat="yyyy/MM/dd HH:mm" />
+        <Button onClick={handleApply}>応募する (Apply)</Button>
+      </Card>
+
+      <Card className="p-4 my-4">
+        <h2 className="text-lg">副大統領スケジュール (Vice President's Schedule)</h2>
+        {approved.length > 0 ? (
+          <table className="table-auto w-full border-collapse border border-gray-500">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border border-gray-500 px-4 py-2">Name</th>
+                <th className="border border-gray-500 px-4 py-2">Federation</th>
+                <th className="border border-gray-500 px-4 py-2">Start Time</th>
+                <th className="border border-gray-500 px-4 py-2">End Time</th>
+                {isAdmin && <th className="border border-gray-500 px-4 py-2">Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {approved.map((app) => (
+                <tr key={app._id}>
+                  <td className="border border-gray-500 px-4 py-2">{app.name}</td>
+                  <td className="border border-gray-500 px-4 py-2">{app.federation}</td>
+                  <td className="border border-gray-500 px-4 py-2">{new Date(app.start_time).toLocaleString()}</td>
+                  <td className="border border-gray-500 px-4 py-2">{new Date(app.end_time).toLocaleString()}</td>
+                  {isAdmin && (
+                    <td className="border border-gray-500 px-4 py-2">
+                      <Button onClick={() => handleDelete(app._id)}>削除</Button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>現在、承認されたスケジュールはありません。</p>
+        )}
+      </Card>
+
+      {/* 管理者ログインフォーム */}
+      <Card className="p-4 my-4">
+        <h2 className="text-lg">管理者ログイン</h2>
+        <Input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="管理者パスワード" />
+        <Button onClick={handleAdminLogin}>ログイン</Button>
+      </Card>
     </div>
   );
-};
-
-export default ApplyForm;
+}

@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
-app.use(express.json());  // 🔹 JSON ボディを正しく受け取るために必要
+app.use(express.json());
 app.use(cors());
 
 mongoose.connect(process.env.MONGO_URI)
@@ -39,9 +39,16 @@ app.post("/apply", async (req, res) => {
       return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
     }
 
+    // 📌 既存のスケジュールと重複する時間があるかチェック（今日と明日のみ）
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dayAfterTomorrow = new Date(today);
+    dayAfterTomorrow.setDate(today.getDate() + 2);
+
     const overlappingApplication = await ApprovedApplication.findOne({
+      start_time: { $gte: today, $lt: dayAfterTomorrow }, // 今日と明日の日付のものだけ対象
       $or: [
-        { start_time: { $lt: end }, end_time: { $gt: start } }
+        { start_time: { $lt: end }, end_time: { $gt: start } } // 時間が重なるものを検索
       ]
     });
 
@@ -67,7 +74,15 @@ app.post("/apply", async (req, res) => {
 // 📌 副大統領スケジュール取得（GET /approved）
 app.get("/approved", async (req, res) => {
   try {
-    const approved = await ApprovedApplication.find().sort({ start_time: 1 });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dayAfterTomorrow = new Date(today);
+    dayAfterTomorrow.setDate(today.getDate() + 2);
+
+    const approved = await ApprovedApplication.find({
+      start_time: { $gte: today, $lt: dayAfterTomorrow }
+    }).sort({ start_time: 1 });
+
     res.json(approved);
   } catch (error) {
     console.error("❌ Error fetching approved applications:", error);
@@ -80,9 +95,6 @@ app.delete("/delete-application/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { password } = req.body;
-
-    // 🔹 確認用ログ
-    console.log("🔹 削除リクエスト受信: ID=", id, "パスワード=", password);
 
     if (!password) {
       return res.status(400).json({ error: "パスワードを入力してください。" });

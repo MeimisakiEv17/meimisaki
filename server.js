@@ -1,3 +1,4 @@
+// server.js
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -30,6 +31,10 @@ app.post("/apply", async (req, res) => {
       return res.status(400).json({ error: "すべての項目を入力してください。" });
     }
 
+    if (start >= end) {
+      return res.status(400).json({ error: "Start TimeはEnd Timeより前である必要があります。" });
+    }
+
     const duration = (end - start) / (1000 * 60 * 60);
     if (duration > 2) {
       return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
@@ -40,7 +45,6 @@ app.post("/apply", async (req, res) => {
         { start_time: { $lt: end }, end_time: { $gt: start } },
       ]
     });
-
     if (overlappingApplication) {
       return res.status(400).json({ error: "指定された時間帯には既にスケジュールがあります。" });
     }
@@ -71,19 +75,40 @@ app.get("/approved", async (req, res) => {
   }
 });
 
-// 📌 特定のIDのデータを削除（DELETE /delete-application/:id）
-app.delete("/delete-application/:id", async (req, res) => {
+// 📌 応募データの削除（DELETE /delete-my-application/:id）
+app.delete("/delete-my-application/:id", async (req, res) => {
   try {
     const { id } = req.params;
-
-    // ID を指定してデータを削除
     const deletedApplication = await ApprovedApplication.findByIdAndDelete(id);
-
     if (!deletedApplication) {
       return res.status(404).json({ error: "データが見つかりません。" });
     }
-
     res.status(200).json({ message: "応募データを削除しました。" });
+  } catch (error) {
+    console.error("❌ Error deleting application:", error);
+    res.status(500).json({ error: "サーバーエラーが発生しました。" });
+  }
+});
+
+// 📌 管理者ログイン（POST /admin-login）
+app.post("/admin-login", (req, res) => {
+  const { password } = req.body;
+  if (password === "Nekomen") {
+    res.status(200).json({ message: "管理者認証成功！" });
+  } else {
+    res.status(401).json({ error: "認証に失敗しました。" });
+  }
+});
+
+// 📌 管理者専用データ削除（DELETE /admin-delete-application/:id）
+app.delete("/admin-delete-application/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedApplication = await ApprovedApplication.findByIdAndDelete(id);
+    if (!deletedApplication) {
+      return res.status(404).json({ error: "データが見つかりません。" });
+    }
+    res.status(200).json({ message: "管理者が応募データを削除しました。" });
   } catch (error) {
     console.error("❌ Error deleting application:", error);
     res.status(500).json({ error: "サーバーエラーが発生しました。" });

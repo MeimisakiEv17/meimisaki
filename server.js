@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
-app.use(express.json());
+app.use(express.json());  // 🔹 JSON ボディを正しく受け取るために必要
 app.use(cors());
 
 mongoose.connect(process.env.MONGO_URI)
@@ -30,18 +30,15 @@ app.post("/apply", async (req, res) => {
       return res.status(400).json({ error: "すべての項目を入力してください。" });
     }
 
-    // 📌 Start_Time が End_Time より大きい場合エラー
     if (start >= end) {
       return res.status(400).json({ error: "開始時間は終了時間より前に設定してください。" });
     }
 
-    // 📌 期間の上限を 2 時間までに制限
     const duration = (end - start) / (1000 * 60 * 60);
     if (duration > 2) {
       return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
     }
 
-    // 📌 既存のスケジュールと重複する時間があるかチェック
     const overlappingApplication = await ApprovedApplication.findOne({
       $or: [
         { start_time: { $lt: end }, end_time: { $gt: start } }
@@ -52,7 +49,6 @@ app.post("/apply", async (req, res) => {
       return res.status(400).json({ error: "指定された時間帯には既にスケジュールがあります。" });
     }
 
-    // 📌 同じ Federation の応募が 2 件以上ある場合エラー
     const federationCount = await ApprovedApplication.countDocuments({ federation });
     if (federationCount >= 2) {
       return res.status(400).json({ error: "同じFederationの応募が2つ以上あります。" });
@@ -85,12 +81,17 @@ app.delete("/delete-application/:id", async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
 
-    // 📌 パスワードチェック（管理者のみ削除可能）
+    // 🔹 確認用ログ
+    console.log("🔹 削除リクエスト受信: ID=", id, "パスワード=", password);
+
+    if (!password) {
+      return res.status(400).json({ error: "パスワードを入力してください。" });
+    }
+
     if (password !== "Nekomen") {
       return res.status(403).json({ error: "管理者権限が必要です。" });
     }
 
-    // 📌 ID を指定してデータを削除
     const deletedApplication = await ApprovedApplication.findByIdAndDelete(id);
 
     if (!deletedApplication) {

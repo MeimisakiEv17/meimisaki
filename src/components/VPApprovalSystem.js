@@ -1,25 +1,32 @@
 import { useState, useEffect } from "react";
-import Card from "./ui/card";
-import Button from "./ui/button";
-import Calendar from "./ui/calendar";
-import Input from "./ui/input";
+import Card from './ui/card';
+import Button from './ui/button';
+import Calendar from './ui/calendar';
+import Input from './ui/input';
 
 export default function VPApprovalSystem() {
   const [form, setForm] = useState({ name: "", federation: "", start_time: null, end_time: null });
   const [approved, setApproved] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
 
-  // 📌 承認済みスケジュールを取得
+  // 📌 承認済みスケジュールを取得（今日と明日のみ）
   const fetchApproved = async () => {
     try {
       const response = await fetch("https://meimisakiserver.onrender.com/approved");
       if (response.ok) {
         const data = await response.json();
-        const sortedData = data
-          .filter(app => new Date(app.start_time) > new Date()) // 🔹 現在時刻より過去のものを削除
-          .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
-        setApproved(sortedData);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dayAfterTomorrow = new Date(today);
+        dayAfterTomorrow.setDate(today.getDate() + 2);
+
+        // 今日と明日のデータのみ取得
+        const filteredData = data.filter(app =>
+          new Date(app.start_time) >= today && new Date(app.start_time) < dayAfterTomorrow
+        );
+
+        setApproved(filteredData);
       } else {
         console.error("Failed to fetch approved applications");
       }
@@ -28,7 +35,6 @@ export default function VPApprovalSystem() {
     }
   };
 
-  // 📌 初回読み込み時にデータ取得
   useEffect(() => {
     fetchApproved();
   }, []);
@@ -61,19 +67,26 @@ export default function VPApprovalSystem() {
     }
   };
 
-  // 📌 管理者ログイン
+  // 📌 管理者ログイン処理
   const handleAdminLogin = () => {
-    if (adminPassword === "Nekomen") {
+    const password = prompt("管理者パスワードを入力してください:");
+    if (password === "Nekomen") {
+      alert("管理者ログイン成功！");
       setIsAdmin(true);
-      alert("管理者としてログインしました");
     } else {
-      alert("パスワードが間違っています");
+      alert("パスワードが違います！");
     }
   };
 
-  // 📌 スケジュール削除
+  // 📌 応募を削除（管理者のみ）
   const handleDelete = async (id) => {
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      alert("管理者のみ削除できます！");
+      return;
+    }
+
+    const confirmDelete = window.confirm("本当にこの応募を削除しますか？");
+    if (!confirmDelete) return;
 
     try {
       const response = await fetch(`https://meimisakiserver.onrender.com/delete-application/${id}`, {
@@ -84,29 +97,65 @@ export default function VPApprovalSystem() {
 
       const data = await response.json();
       if (response.ok) {
-        alert("スケジュールを削除しました");
+        alert(data.message);
         fetchApproved();
       } else {
         alert(data.error);
       }
     } catch (error) {
       console.error("Error deleting application:", error);
-      alert("サーバーエラーが発生しました");
+      alert("サーバーエラーが発生しました。");
     }
   };
 
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold">1135サーバー VPシステム (1135 Server VP System)</h1>
+
+      {/* 📌 応募フォーム */}
       <Card className="p-4 my-4">
         <h2 className="text-lg">副大統領応募フォーム (Vice President Application Form)</h2>
-        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" />
-        <Input value={form.federation} onChange={(e) => setForm({ ...form, federation: e.target.value })} placeholder="Federation" />
-        <Calendar selected={form.start_time} onChange={(date) => setForm({ ...form, start_time: date })} showTimeSelect timeIntervals={60} dateFormat="yyyy/MM/dd HH:mm" />
-        <Calendar selected={form.end_time} onChange={(date) => setForm({ ...form, end_time: date })} showTimeSelect timeIntervals={60} dateFormat="yyyy/MM/dd HH:mm" />
-        <Button onClick={handleApply}>応募する (Apply)</Button>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="mb-2 font-bold">Name</div>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div>
+            <div className="mb-2 font-bold">Start Time</div>
+            <Calendar
+              selected={form.start_time}
+              onChange={(date) => setForm({ ...form, start_time: date })}
+              showTimeSelect
+              timeIntervals={60}
+              dateFormat="yyyy/MM/dd HH:mm"
+            />
+          </div>
+          <div>
+            <div className="mb-2 font-bold">Federation</div>
+            <Input value={form.federation} onChange={(e) => setForm({ ...form, federation: e.target.value })} />
+          </div>
+          <div>
+            <div className="mb-2 font-bold">End Time</div>
+            <Calendar
+              selected={form.end_time}
+              onChange={(date) => setForm({ ...form, end_time: date })}
+              showTimeSelect
+              timeIntervals={60}
+              dateFormat="yyyy/MM/dd HH:mm"
+            />
+          </div>
+        </div>
+        <Button onClick={handleApply} className="mt-4">応募する (Apply)</Button>
       </Card>
 
+      {/* 📌 管理者ログインボタン */}
+      {!isAdmin && (
+        <Button onClick={handleAdminLogin} className="mb-4">
+          管理者ログイン (Admin Login)
+        </Button>
+      )}
+
+      {/* 📌 副大統領スケジュール（今日と明日）*/}
       <Card className="p-4 my-4">
         <h2 className="text-lg">副大統領スケジュール (Vice President's Schedule)</h2>
         {approved.length > 0 ? (
@@ -117,7 +166,7 @@ export default function VPApprovalSystem() {
                 <th className="border border-gray-500 px-4 py-2">Federation</th>
                 <th className="border border-gray-500 px-4 py-2">Start Time</th>
                 <th className="border border-gray-500 px-4 py-2">End Time</th>
-                {isAdmin && <th className="border border-gray-500 px-4 py-2">Actions</th>}
+                {isAdmin && <th className="border border-gray-500 px-4 py-2">Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -129,7 +178,9 @@ export default function VPApprovalSystem() {
                   <td className="border border-gray-500 px-4 py-2">{new Date(app.end_time).toLocaleString()}</td>
                   {isAdmin && (
                     <td className="border border-gray-500 px-4 py-2">
-                      <Button onClick={() => handleDelete(app._id)}>削除</Button>
+                      <Button onClick={() => handleDelete(app._id)} className="bg-red-500 text-white">
+                        削除 (Delete)
+                      </Button>
                     </td>
                   )}
                 </tr>
@@ -137,15 +188,8 @@ export default function VPApprovalSystem() {
             </tbody>
           </table>
         ) : (
-          <p>現在、承認されたスケジュールはありません。</p>
+          <p>今日と明日のスケジュールはありません。</p>
         )}
-      </Card>
-
-      {/* 管理者ログインフォーム */}
-      <Card className="p-4 my-4">
-        <h2 className="text-lg">管理者ログイン</h2>
-        <Input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="管理者パスワード" />
-        <Button onClick={handleAdminLogin}>ログイン</Button>
       </Card>
     </div>
   );

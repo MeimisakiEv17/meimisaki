@@ -48,7 +48,8 @@ app.post("/apply", async (req, res) => {
     const overlappingApplication = await ApprovedApplication.findOne({
       start_time: { $gte: today, $lt: dayAfterTomorrow }, // 今日と明日の日付のものだけ対象
       $or: [
-        { start_time: { $lt: end }, end_time: { $gt: start } } // 時間が重なるものを検索
+        { start_time: { $lt: end, $ne: start } }, // 既存の開始時間が新しい終了時間より前であり、新しい開始時間と一致しない
+        { end_time: { $gt: start, $ne: end } }  // 既存の終了時間が新しい開始時間より後であり、新しい終了時間と一致しない
       ]
     });
 

@@ -39,19 +39,25 @@ app.post("/apply", async (req, res) => {
       return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
     }
 
+    // 📌 現在の時間から24時間前と24時間後の範囲内でのスケジュール取得
     const now = new Date();
+    const startTimeRange = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24時間前
+    const endTimeRange = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24時間後
+
+    const approvedApplications = await ApprovedApplication.find({
+      end_time: { $gte: startTimeRange, $lt: endTimeRange }
+    });
 
     // 📌 指定された日付で同じFederationの応募が2つ以上存在するかチェック
-    const startOfDay = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0);
+    const adjustToJST = (date) => new Date(date.getTime() + 9 * 60 * 60 * 1000);
+    const startOfDay = new Date(adjustToJST(start).getFullYear(), adjustToJST(start).getMonth(), adjustToJST(start).getDate(), 0, 0, 0);
     const endOfDay = new Date(startOfDay);
     endOfDay.setDate(startOfDay.getDate() + 1);
 
-    const approvedApplications = await ApprovedApplication.find({
-      end_time: { $gte: startOfDay, $lt: endOfDay }
-    });
-
     const federationCount = approvedApplications.filter(application =>
-      application.federation === federation
+      application.federation === federation &&
+      adjustToJST(application.start_time) >= startOfDay &&
+      adjustToJST(application.start_time) < endOfDay
     ).length;
 
     if (federationCount >= 2) {

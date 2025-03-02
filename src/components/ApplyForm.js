@@ -15,9 +15,11 @@ const ApplyForm = ({ fetchApproved }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 📌 日付の変換 (ISO 形式)
-    const startTimeISO = new Date(formData.start_time).toISOString();
-    const endTimeISO = new Date(formData.end_time).toISOString();
+    // 📌 日本時間をUTCに変換
+    const startTimeJST = new Date(formData.start_time);
+    const endTimeJST = new Date(formData.end_time);
+    const startTimeUTC = new Date(startTimeJST.getTime() - 9 * 60 * 60 * 1000).toISOString();
+    const endTimeUTC = new Date(endTimeJST.getTime() - 9 * 60 * 60 * 1000).toISOString();
 
     try {
       const response = await fetch("https://meimisakiserver.onrender.com/apply", {
@@ -26,8 +28,8 @@ const ApplyForm = ({ fetchApproved }) => {
         body: JSON.stringify({
           name: formData.name,
           federation: formData.federation,
-          start_time: startTimeISO,
-          end_time: endTimeISO,
+          start_time: startTimeUTC,
+          end_time: endTimeUTC,
         }),
       });
 

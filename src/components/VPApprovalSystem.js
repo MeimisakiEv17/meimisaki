@@ -9,21 +9,20 @@ export default function VPApprovalSystem() {
   const [approved, setApproved] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // 📌 承認済みスケジュールを取得（今日と明日のみ）
+  // 📌 承認済みスケジュールを取得（現時刻から24時間後まで）
   const fetchApproved = async () => {
     try {
       const response = await fetch("https://meimisakiserver.onrender.com/approved");
       if (response.ok) {
         const data = await response.json();
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const dayAfterTomorrow = new Date(today);
-        dayAfterTomorrow.setDate(today.getDate() + 2);
+        const now = new Date();
+        const oneDayLater = new Date(now);
+        oneDayLater.setDate(now.getDate() + 1);
 
-        // 今日と明日のデータのみ取得
+        // 現時刻から24時間後までのデータのみ取得
         const filteredData = data.filter(app =>
-          new Date(app.start_time) >= today && new Date(app.start_time) < dayAfterTomorrow
+          new Date(app.end_time) > now && new Date(app.end_time) <= oneDayLater
         );
 
         setApproved(filteredData);
@@ -155,7 +154,7 @@ export default function VPApprovalSystem() {
         </Button>
       )}
 
-      {/* 📌 副大統領スケジュール（今日と明日）*/}
+      {/* 📌 副大統領スケジュール（現時刻から24時間後まで）*/}
       <Card className="p-4 my-4">
         <h2 className="text-lg">副大統領スケジュール (Vice President's Schedule)</h2>
         {approved.length > 0 ? (
@@ -188,7 +187,7 @@ export default function VPApprovalSystem() {
             </tbody>
           </table>
         ) : (
-          <p>今日と明日のスケジュールはありません。</p>
+          <p>現時刻から24時間後までのスケジュールはありません。</p>
         )}
       </Card>
     </div>

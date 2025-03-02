@@ -39,24 +39,6 @@ app.post("/apply", async (req, res) => {
       return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
     }
 
-    // 📌 既存のスケジュールと重複する時間があるかチェック（今日と明日のみ）
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dayAfterTomorrow = new Date(today);
-    dayAfterTomorrow.setDate(today.getDate() + 2);
-
-    const overlappingApplication = await ApprovedApplication.findOne({
-      start_time: { $gte: today, $lt: dayAfterTomorrow }, // 今日と明日の日付のものだけ対象
-      $or: [
-        { start_time: { $lt: end, $ne: start } }, // 既存の開始時間が新しい終了時間より前であり、新しい開始時間と一致しない
-        { end_time: { $gt: start, $ne: end } }  // 既存の終了時間が新しい開始時間より後であり、新しい終了時間と一致しない
-      ]
-    });
-
-    if (overlappingApplication) {
-      return res.status(400).json({ error: "指定された時間帯には既にスケジュールがあります。" });
-    }
-
     const federationCount = await ApprovedApplication.countDocuments({ federation });
     if (federationCount >= 2) {
       return res.status(400).json({ error: "同じFederationの応募が2つ以上あります。" });
@@ -75,13 +57,12 @@ app.post("/apply", async (req, res) => {
 // 📌 副大統領スケジュール取得（GET /approved）
 app.get("/approved", async (req, res) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dayAfterTomorrow = new Date(today);
-    dayAfterTomorrow.setDate(today.getDate() + 2);
+    const now = new Date();
+    const oneDayLater = new Date(now);
+    oneDayLater.setDate(now.getDate() + 1);
 
     const approved = await ApprovedApplication.find({
-      start_time: { $gte: today, $lt: dayAfterTomorrow }
+      end_time: { $gt: now, $lt: oneDayLater }
     }).sort({ start_time: 1 });
 
     res.json(approved);

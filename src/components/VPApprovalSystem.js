@@ -41,7 +41,7 @@ export default function VPApprovalSystem() {
   // 📌 応募を送信する
   const handleApply = async () => {
     if (!form.name || !form.federation || !form.start_time || !form.end_time) {
-      alert("すべての項目を入力してください！");
+      alert("すべての項目を入力してください！Please enter all items!");
       return;
     }
 
@@ -62,29 +62,29 @@ export default function VPApprovalSystem() {
       }
     } catch (error) {
       console.error("Error submitting application:", error);
-      alert("サーバーエラーが発生しました");
+      alert("サーバーエラーが発生しました。A server error has occurred.");
     }
   };
 
   // 📌 管理者ログイン処理
   const handleAdminLogin = () => {
-    const password = prompt("管理者パスワードを入力してください:");
+    const password = prompt("管理者パスワードを入力してください。Please enter the administrator password.:");
     if (password === "Nekomen") {
-      alert("管理者ログイン成功！");
+      alert("管理者ログイン成功！Administrator login successful!");
       setIsAdmin(true);
     } else {
-      alert("パスワードが違います！");
+      alert("パスワードが違います！The password is incorrect!");
     }
   };
 
   // 📌 応募を削除（管理者のみ）
   const handleDelete = async (id) => {
     if (!isAdmin) {
-      alert("管理者のみ削除できます！");
+      alert("管理者のみ削除できます！Only administrators can delete!");
       return;
     }
 
-    const confirmDelete = window.confirm("本当にこの応募を削除しますか？");
+    const confirmDelete = window.confirm("本当にこの応募を削除しますか？Do you really want to delete this application?");
     if (!confirmDelete) return;
 
     try {
@@ -103,7 +103,7 @@ export default function VPApprovalSystem() {
       }
     } catch (error) {
       console.error("Error deleting application:", error);
-      alert("サーバーエラーが発生しました。");
+      alert("サーバーエラーが発生しました。A server error has occurred.");
     }
   };
 
@@ -191,7 +191,7 @@ export default function VPApprovalSystem() {
             </tbody>
           </table>
         ) : (
-          <p>現時刻から24時間後までのスケジュールはありません。</p>
+          <p>スケジュールはありません。There is no schedule.</p>
         )}
       </Card>
     </div>

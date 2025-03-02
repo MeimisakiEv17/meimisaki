@@ -27,16 +27,16 @@ app.post("/apply", async (req, res) => {
     const end = new Date(end_time);
 
     if (!name || !federation || !start_time || !end_time) {
-      return res.status(400).json({ error: "すべての項目を入力してください。" });
+      return res.status(400).json({ error: "すべての項目を入力してください。Please enter all items." });
     }
 
     if (start >= end) {
-      return res.status(400).json({ error: "開始時間は終了時間より前に設定してください。" });
+      return res.status(400).json({ error: "開始時間は終了時間より前に設定してください。Please set the start time before the end time." });
     }
 
     const duration = (end - start) / (1000 * 60 * 60);
     if (duration > 2) {
-      return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
+      return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。Please keep the time between Start Time and End Time within 2 hours." });
     }
 
     // 📌 現在の時間から24時間前と24時間後の範囲内でのスケジュール取得
@@ -61,16 +61,16 @@ app.post("/apply", async (req, res) => {
     ).length;
 
     if (federationCount >= 2) {
-      return res.status(400).json({ error: `同じ日に同じFederationの応募が2つ以上あります。` });
+      return res.status(400).json({ error: `同じ日に同じFederationの応募が2つ以上あります。There are two or more applications from the same Federation on the same day.` });
     }
 
     const newApplication = new ApprovedApplication({ name, federation, start_time: start, end_time: end });
     await newApplication.save();
 
-    res.status(201).json({ message: "応募が送信されました！" });
+    res.status(201).json({ message: "応募が送信されました！Your application has been submitted!" });
   } catch (error) {
     console.error("❌ Error saving application:", error);
-    res.status(500).json({ error: "サーバーエラーが発生しました。" });
+    res.status(500).json({ error: "サーバーエラーが発生しました。A server error has occurred." });
   }
 });
 
@@ -99,23 +99,23 @@ app.delete("/delete-application/:id", async (req, res) => {
     const { password } = req.body;
 
     if (!password) {
-      return res.status(400).json({ error: "パスワードを入力してください。" });
+      return res.status(400).json({ error: "パスワードを入力してください。Please enter your password." });
     }
 
     if (password !== "Nekomen") {
-      return res.status(403).json({ error: "管理者権限が必要です。" });
+      return res.status(403).json({ error: "管理者権限が必要です。Administrator privileges are required." });
     }
 
     const deletedApplication = await ApprovedApplication.findByIdAndDelete(id);
 
     if (!deletedApplication) {
-      return res.status(404).json({ error: "データが見つかりません。" });
+      return res.status(404).json({ error: "データが見つかりません。Data not found." });
     }
 
-    res.status(200).json({ message: "応募データを削除しました。" });
+    res.status(200).json({ message: "応募データを削除しました。The application data has been deleted." });
   } catch (error) {
     console.error("❌ Error deleting application:", error);
-    res.status(500).json({ error: "サーバーエラーが発生しました。" });
+    res.status(500).json({ error: "サーバーエラーが発生しました。A server error has occurred." });
   }
 });
 

@@ -39,11 +39,11 @@ const ApplyForm = ({ fetchApproved }) => {
         setFormData({ name: "", federation: "", start_time: "", end_time: "" });
         fetchApproved(); // スケジュールを更新
       } else {
-        alert(`応募に失敗しました: ${data.error}`);
+        alert(`応募に失敗しました。Application failed.: ${data.error}`);
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("サーバーエラーが発生しました");
+      alert("サーバーエラーが発生しました。A server error has occurred.");
     }
   };
 

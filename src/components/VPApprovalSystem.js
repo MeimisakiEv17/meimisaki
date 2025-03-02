@@ -108,18 +108,18 @@ export default function VPApprovalSystem() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4" style={{ marginLeft: "60px" }}>
       <h1 className="text-xl font-bold">1135サーバー VPシステム (1135 Server VP System)</h1>
 
       {/* 📌 応募フォーム */}
       <Card className="p-4 my-4">
         <h2 className="text-lg">副大統領応募フォーム (Vice President Application Form)</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div>
+          <div style={{ marginLeft: "60px" }}>
             <div className="mb-2 font-bold">Name</div>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
-          <div>
+          <div style={{ marginLeft: "60px" }}>
             <div className="mb-2 font-bold">Start Time</div>
             <Calendar
               selected={form.start_time}
@@ -129,11 +129,11 @@ export default function VPApprovalSystem() {
               dateFormat="yyyy/MM/dd HH:mm"
             />
           </div>
-          <div>
+          <div style={{ marginLeft: "60px" }}>
             <div className="mb-2 font-bold">Federation</div>
             <Input value={form.federation} onChange={(e) => setForm({ ...form, federation: e.target.value })} />
           </div>
-          <div>
+          <div style={{ marginLeft: "60px" }}>
             <div className="mb-2 font-bold">End Time</div>
             <Calendar
               selected={form.end_time}
@@ -144,14 +144,18 @@ export default function VPApprovalSystem() {
             />
           </div>
         </div>
-        <Button onClick={handleApply} className="mt-4">応募する (Apply)</Button>
+        <div style={{ marginLeft: "60px" }}>
+          <Button onClick={handleApply} className="mt-4">応募する (Apply)</Button>
+        </div>
       </Card>
 
       {/* 📌 管理者ログインボタン */}
       {!isAdmin && (
-        <Button onClick={handleAdminLogin} className="mb-4">
-          管理者ログイン (Admin Login)
-        </Button>
+        <div style={{ marginLeft: "60px" }}>
+          <Button onClick={handleAdminLogin} className="mb-4">
+            管理者ログイン (Admin Login)
+          </Button>
+        </div>
       )}
 
       {/* 📌 副大統領スケジュール（現時刻から24時間後まで）*/}

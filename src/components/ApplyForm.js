@@ -50,21 +50,33 @@ const ApplyForm = ({ fetchApproved }) => {
   return (
     <form onSubmit={handleSubmit}>
       <h2>応募フォーム</h2>
-      <div>
-        <label>名前:</label>
-        <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+      <div style={{ display: "flex", gap: "10px" }}>
+        <div style={{ marginLeft: "60px" }}>
+          <label>
+            名前:
+            <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+          </label>
+        </div>
+        <div style={{ marginLeft: "60px" }}>
+          <label>
+            開始時間:
+            <input type="datetime-local" name="start_time" value={formData.start_time} onChange={handleChange} required />
+          </label>
+        </div>
       </div>
-      <div>
-        <label>開始時間:</label>
-        <input type="datetime-local" name="start_time" value={formData.start_time} onChange={handleChange} required />
-      </div>
-      <div>
-        <label>Federation:</label>
-        <input type="text" name="federation" value={formData.federation} onChange={handleChange} required />
-      </div>
-      <div>
-        <label>終了時間:</label>
-        <input type="datetime-local" name="end_time" value={formData.end_time} onChange={handleChange} required />
+      <div style={{ display: "flex", gap: "10px" }}>
+        <div style={{ marginLeft: "60px" }}>
+          <label>
+            Federation:
+            <input type="text" name="federation" value={formData.federation} onChange={handleChange} required />
+          </label>
+        </div>
+        <div style={{ marginLeft: "60px" }}>
+          <label>
+            終了時間:
+            <input type="datetime-local" name="end_time" value={formData.end_time} onChange={handleChange} required />
+          </label>
+        </div>
       </div>
       <button type="submit">応募する</button>
     </form>

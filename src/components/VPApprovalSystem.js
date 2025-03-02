@@ -9,7 +9,7 @@ export default function VPApprovalSystem() {
   const [approved, setApproved] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // 📌 承認済みスケジュールを取得（現時刻から24時間後まで）
+  // 現時刻から5時間前から24時間後までのデータのみ取得
   const fetchApproved = async () => {
     try {
       const response = await fetch("https://meimisakiserver.onrender.com/approved");
@@ -17,12 +17,12 @@ export default function VPApprovalSystem() {
         const data = await response.json();
 
         const now = new Date();
-        const oneDayLater = new Date(now);
-        oneDayLater.setDate(now.getDate() + 1);
+        const fiveHoursAgo = new Date(now.getTime() - 5 * 60 * 60 * 1000);
+        const oneDayLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-        // 現時刻から24時間後までのデータのみ取得
+        // 現時刻から5時間前から24時間後までのデータのみ取得
         const filteredData = data.filter(app =>
-          new Date(app.end_time) > now && new Date(app.end_time) <= oneDayLater
+          new Date(app.end_time) > fiveHoursAgo && new Date(app.end_time) <= oneDayLater
         );
 
         setApproved(filteredData);

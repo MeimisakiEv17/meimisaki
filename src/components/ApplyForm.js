@@ -39,7 +39,7 @@ const ApplyForm = ({ fetchApproved }) => {
         setFormData({ name: "", federation: "", start_time: "", end_time: "" });
         fetchApproved(); // スケジュールを更新
       } else {
-        alert(応募に失敗しました: ${data.error});
+        alert(`応募に失敗しました: ${data.error}`);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -50,26 +50,22 @@ const ApplyForm = ({ fetchApproved }) => {
   return (
     <form onSubmit={handleSubmit}>
       <h2>応募フォーム</h2>
-      <label>
-        名前:
+      <div>
+        <label>名前:</label>
         <input type="text" name="name" value={formData.name} onChange={handleChange} required />
-      </label>
-      <br />
-      <label>
-        Federation:
-        <input type="text" name="federation" value={formData.federation} onChange={handleChange} required />
-      </label>
-      <br />
-      <label>
-        開始時間:
+      </div>
+      <div>
+        <label>開始時間:</label>
         <input type="datetime-local" name="start_time" value={formData.start_time} onChange={handleChange} required />
-      </label>
-      <br />
-      <label>
-        終了時間:
+      </div>
+      <div>
+        <label>Federation:</label>
+        <input type="text" name="federation" value={formData.federation} onChange={handleChange} required />
+      </div>
+      <div>
+        <label>終了時間:</label>
         <input type="datetime-local" name="end_time" value={formData.end_time} onChange={handleChange} required />
-      </label>
-      <br />
+      </div>
       <button type="submit">応募する</button>
     </form>
   );

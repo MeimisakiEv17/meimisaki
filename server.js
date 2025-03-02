@@ -39,22 +39,28 @@ app.post("/apply", async (req, res) => {
       return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
     }
 
-    // 📌 既存のスケジュールと重複する時間があるかチェック
-    const overlappingApplication = await ApprovedApplication.findOne({
-      $or: [
-        { start_time: { $lt: end, $gte: start } },
-        { end_time: { $gt: start, $lte: end } }
-      ]
+    // 📌 現在の時間から24時間前と24時間後の範囲内でのスケジュール取得
+    const now = new Date();
+    const startTimeRange = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24時間前
+    const endTimeRange = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24時間後
+
+    const approvedApplications = await ApprovedApplication.find({
+      end_time: { $gte: startTimeRange, $lt: endTimeRange }
     });
 
-    if (overlappingApplication) {
-      console.log("❌ 重複するスケジュール:", overlappingApplication);
-      return res.status(400).json({ error: "指定された時間帯には既にスケジュールがあります。" });
-    }
+    // 📌 指定された日付で同じFederationの応募が2つ以上存在するかチェック
+    const startOfDay = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0);
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(startOfDay.getDate() + 1);
 
-    const federationCount = await ApprovedApplication.countDocuments({ federation });
+    const federationCount = approvedApplications.filter(application =>
+      application.federation === federation &&
+      application.start_time >= startOfDay &&
+      application.start_time < endOfDay
+    ).length;
+
     if (federationCount >= 2) {
-      return res.status(400).json({ error: "同じFederationの応募が2つ以上あります。" });
+      return res.status(400).json({ error: `同じ日に同じFederationの応募が2つ以上あります。` });
     }
 
     const newApplication = new ApprovedApplication({ name, federation, start_time: start, end_time: end });
@@ -71,16 +77,11 @@ app.post("/apply", async (req, res) => {
 app.get("/approved", async (req, res) => {
   try {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const startDateTime = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 14, 0, 0);
+    const startTimeRange = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24時間前
+    const endTimeRange = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24時間後
 
     const approved = await ApprovedApplication.find({
-      end_time: { $gte: startDateTime, $lt: new Date(tomorrow).setDate(tomorrow.getDate() + 1) }
+      end_time: { $gte: startTimeRange, $lt: endTimeRange }
     }).sort({ start_time: 1 });
 
     res.json(approved);

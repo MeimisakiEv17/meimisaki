@@ -39,6 +39,19 @@ app.post("/apply", async (req, res) => {
       return res.status(400).json({ error: "Start TimeとEnd Timeの間は2時間以内にしてください。" });
     }
 
+    // 📌 既存のスケジュールと重複する時間があるかチェック
+    const overlappingApplication = await ApprovedApplication.findOne({
+      $or: [
+        { start_time: { $lt: end, $gte: start } },
+        { end_time: { $gt: start, $lte: end } }
+      ]
+    });
+
+    if (overlappingApplication) {
+      console.log("❌ 重複するスケジュール:", overlappingApplication);
+      return res.status(400).json({ error: "指定された時間帯には既にスケジュールがあります。" });
+    }
+
     const federationCount = await ApprovedApplication.countDocuments({ federation });
     if (federationCount >= 2) {
       return res.status(400).json({ error: "同じFederationの応募が2つ以上あります。" });
@@ -58,11 +71,12 @@ app.post("/apply", async (req, res) => {
 app.get("/approved", async (req, res) => {
   try {
     const now = new Date();
-    const oneDayLater = new Date(now);
-    oneDayLater.setDate(now.getDate() + 1);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
 
     const approved = await ApprovedApplication.find({
-      end_time: { $gt: now, $lt: oneDayLater }
+      end_time: { $gte: today, $lt: new Date(tomorrow).setDate(tomorrow.getDate() + 1) }
     }).sort({ start_time: 1 });
 
     res.json(approved);

@@ -75,8 +75,12 @@ app.get("/approved", async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const startDateTime = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 14, 0, 0);
+
     const approved = await ApprovedApplication.find({
-      end_time: { $gte: today, $lt: new Date(tomorrow).setDate(tomorrow.getDate() + 1) }
+      end_time: { $gte: startDateTime, $lt: new Date(tomorrow).setDate(tomorrow.getDate() + 1) }
     }).sort({ start_time: 1 });
 
     res.json(approved);
